@@ -1,0 +1,6 @@
+MOVI 123
+ADD 32, A
+DIV A, A
+IN B
+OUT D
+
