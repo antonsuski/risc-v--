@@ -1,5 +1,5 @@
 MOVI 123
-ADD 32, A
+ADD C, A
 DIV A, A
 IN B
 OUT D

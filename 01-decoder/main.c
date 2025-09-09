@@ -17,6 +17,10 @@ enum opc_type_t
 enum opcode_t
 {
 	movi = 0x0,
+	add  = 0x8,
+	sub  = 0x9,
+	divv = 0xA,
+	mul  = 0xB,
 	out  = 0x31,
 	in   = 0x30
 };
@@ -55,7 +59,7 @@ struct instruction_t
 
 void to_lower (char* src, size_t size)
 {
-	assert(src != NULL && "ERROR: String must be non NULL value\n");
+	assert(src != NULL && "ERROR");
 
 	for (size_t i = 0; i < size; i++)
 	{
@@ -66,12 +70,12 @@ void to_lower (char* src, size_t size)
 struct instruction_t parse_movi ()
 {
 	struct instruction_t inst;
-	// char mnemonic[def_mnemonic_size];
 	int imm;
+
 	if (!scanf("%u", &imm))
 	{
-		fprintf(stderr, "ERROR: Nothing to parse.\n");
-		abort();
+		fprintf(stdout, "ERROR");
+		exit(EXIT_SUCCESS);
 	}
 
 	inst.oct = move;
@@ -88,9 +92,11 @@ enum reg_t parse_reg ()
 
 	if (!scanf("%s", reg))
 	{
-		fprintf(stderr, "ERROR: No reg to parse.\n");
-		abort();
+		fprintf(stdout, "ERROR");
+		exit(EXIT_SUCCESS);
 	}
+
+	reg[0] = tolower (reg[0]);
 
 	switch (reg[0])
 	{
@@ -99,27 +105,25 @@ enum reg_t parse_reg ()
 		case 'c':
 		case 'd':
 		{
-			res = 'a' - reg[0];
+			res = reg[0] - 'a';
 		} break;
 		default:
 		{
-			fprintf(stderr, "ERROR: Reg <%c> is unknown.\n", reg[0]);
-			abort();
+			fprintf(stdout, "ERROR");
+			exit(EXIT_SUCCESS);
 		} break;
 	}
-
 	return res;
 }
 
-struct instruction_t parse_arith ()
+struct instruction_t parse_arith (enum opcode_t oc)
 {
 	struct instruction_t inst;
-	char mnemonic[2];
-	if (!scanf("%1s", mnemonic))
-	{
-		fprintf(stderr, "ERROR: Nothing to parse.\n");
-		abort();
-	}
+
+	inst.oc = oc;
+	inst.oct = arith;
+	inst.os.regs.rx = parse_reg ();
+	inst.os.regs.rs = parse_reg ();
 
 	return inst;
 }
@@ -127,15 +131,19 @@ struct instruction_t parse_arith ()
 struct instruction_t parse_io (enum opcode_t oc)
 {
 	struct instruction_t inst;
+
 	inst.os.reg = parse_reg();
 	inst.oc = oc;
 	inst.oct = io;
+
 	return inst;
 }
+
 
 int encode (struct instruction_t inst)
 {
 	int res = 0;
+
 	switch (inst.oct)
 	{
 		case move:
@@ -146,12 +154,17 @@ int encode (struct instruction_t inst)
 		{
 			res |= (inst.oc << 2) | (inst.os.reg & 0x03);
 		} break;
+		case arith:
+		{
+			res |= (inst.oc << 4) | (inst.os.regs.rx << 2) | (inst.os.regs.rs);
+		} break;
 		default:
 		{
-			fprintf(stderr, "ERROR: Wrong instruction.\n");
-			abort();
+			fprintf(stdout, "ERROR: Wrong instruction.\n");
+			exit(EXIT_SUCCESS);
 		} break;
 	}
+
 	return res;
 }
 
@@ -174,15 +187,30 @@ int main (int argc, char** argv)
 		{
 			instruction = encode(parse_io(in));
 		}
+		else if(strcmp("add", mnemonic) == 0)
+		{
+			instruction = encode(parse_arith(add));
+		}
+		else if(strcmp("sub", mnemonic) == 0)
+		{
+			instruction = encode(parse_arith(sub));
+		}
+		else if(strcmp("div", mnemonic) == 0)
+		{
+			instruction = encode(parse_arith(divv));
+		}
+		else if(strcmp("mul", mnemonic) == 0)
+		{
+			instruction = encode(parse_arith(mul));
+		}
 		else
 		{
-			fprintf(stderr, "ERROR: Unknown mnemonic <%s>\n", mnemonic);
-			abort();
+			fprintf(stdout, "ERROR:");
+			exit(EXIT_SUCCESS);
 		}
-		printf("%s ", mnemonic);
-		printf("0x%02x\n", instruction);
+		printf("0x%02x ", instruction);
+		fflush(stdout);
 	}
-	printf("\n");
-	return 0;
+	return EXIT_SUCCESS;
 }
 
