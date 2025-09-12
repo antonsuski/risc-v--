@@ -1,18 +1,19 @@
 test:=test
+test_files:= $(wildcard ${test}/*.pasm)
 target:=encoder
 
 ${target}: main.c
 	clang main.c -o ${target}
 
-@phony: test run_test clean
+@phony: test clean
 
-run_test: encoder
-	./encoder < ${test}/test0.pasm
-	./encoder < ${test}/test1.pasm
-	./encoder < ${test}/test2.pasm
-	./encoder < ${test}/test3.pasm
-	./encoder < ${test}/test4.pasm
-	./encoder < ${test}/test5.pasm
+run_test: ${target}
+	@for test_file in $(test_files); do \
+		echo "Running test: $$test_file"; \
+		cat "$$test_file"; \
+		./${target} < "$$test_file"; \
+		echo ""; \
+	done
 
 test: run_test
 

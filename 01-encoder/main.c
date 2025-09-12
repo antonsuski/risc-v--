@@ -70,9 +70,15 @@ void to_lower (char* src, size_t size)
 struct instruction_t parse_movi ()
 {
 	struct instruction_t inst;
-	int imm;
+	int imm = -1;
 
-	if (!scanf("%u", &imm))
+	if (!scanf(" %u", &imm))
+	{
+		fprintf(stdout, "ERROR");
+		exit(EXIT_SUCCESS);
+	}
+
+	if ( 0 > imm || imm > 0x7f)
 	{
 		fprintf(stdout, "ERROR");
 		exit(EXIT_SUCCESS);
@@ -160,7 +166,7 @@ int encode (struct instruction_t inst)
 		} break;
 		default:
 		{
-			fprintf(stdout, "ERROR: Wrong instruction.\n");
+			fprintf(stdout, "ERROR");
 			exit(EXIT_SUCCESS);
 		} break;
 	}
@@ -205,7 +211,7 @@ int main (int argc, char** argv)
 		}
 		else
 		{
-			fprintf(stdout, "ERROR:");
+			fprintf(stdout, "ERROR");
 			exit(EXIT_SUCCESS);
 		}
 		printf("0x%02x ", instruction);

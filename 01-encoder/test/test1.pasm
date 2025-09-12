@@ -1,6 +1,0 @@
-MOVI 123
-ADD C, A
-DIV A, A
-IN B
-OUT D
-
