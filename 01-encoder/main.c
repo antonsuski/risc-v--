@@ -57,6 +57,19 @@ struct instruction_t
 	union operands_t os;
 };
 
+void check_end ()
+{
+	char end = fgetc (stdin);
+	while (end != EOF && end != '\n')
+	{
+		if (end != ' ')
+		{
+			fprintf(stdout, "ERROR");
+			exit(EXIT_SUCCESS);
+		}
+	}
+}
+
 void to_lower (char* src, size_t size)
 {
 	assert(src != NULL && "ERROR");
@@ -72,7 +85,7 @@ struct instruction_t parse_movi ()
 	struct instruction_t inst;
 	int imm = -1;
 
-	if (!scanf(" %u", &imm))
+	if (!scanf(" %u ", &imm))
 	{
 		fprintf(stdout, "ERROR");
 		exit(EXIT_SUCCESS);
@@ -84,6 +97,8 @@ struct instruction_t parse_movi ()
 		exit(EXIT_SUCCESS);
 	}
 
+	check_end();
+
 	inst.oct = move;
 	inst.oc = movi;
 	inst.os.imm = imm;
@@ -91,45 +106,73 @@ struct instruction_t parse_movi ()
 	return inst;
 }
 
-enum reg_t parse_reg ()
+enum reg_t decide_reg (const char reg)
 {
-	enum reg_t res;
-	char reg[2];
-
-	if (!scanf("%s", reg))
+	switch (reg)
 	{
-		fprintf(stdout, "ERROR");
-		exit(EXIT_SUCCESS);
-	}
-
-	reg[0] = tolower (reg[0]);
-
-	switch (reg[0])
-	{
-		case 'a':
-		case 'b':
-		case 'c':
-		case 'd':
-		{
-			res = reg[0] - 'a';
-		} break;
+		case 'a': return a;
+		case 'b': return b;
+		case 'c': return c;
+		case 'd': return d;
 		default:
 		{
 			fprintf(stdout, "ERROR");
 			exit(EXIT_SUCCESS);
-		} break;
+		}
 	}
-	return res;
+}
+
+enum reg_t parse_reg ()
+{
+	char reg;
+
+	if (!scanf(" %c ", &reg))
+	{
+		fprintf (stdout, "ERROR");
+		exit (EXIT_SUCCESS);
+	}
+	
+	reg = tolower(reg);
+	return decide_reg (reg);
+
+	//check_end();
 }
 
 struct instruction_t parse_arith (enum opcode_t oc)
 {
 	struct instruction_t inst;
+	char reg;
+	enum reg_t* curr_reg = &inst.os.regs.rx;
 
 	inst.oc = oc;
 	inst.oct = arith;
-	inst.os.regs.rx = parse_reg ();
-	inst.os.regs.rs = parse_reg ();
+
+	reg = fgetc (stdin);
+	while (reg != EOF && reg != '\n')
+	{
+		switch(reg)
+		{
+			case ',':
+			{
+				if (curr_reg == &inst.os.regs.rs)
+				{
+					fprintf(stdout, "ERROR");
+					exit(EXIT_SUCCESS);
+				}
+
+				curr_reg = &inst.os.regs.rs;
+			}break;
+			case ' ':
+			{
+			} break;
+			default:
+			{
+				reg = tolower(reg);
+				*curr_reg = decide_reg(reg);
+			}break;
+		}
+		reg = fgetc (stdin);
+	}
 
 	return inst;
 }
@@ -139,8 +182,11 @@ struct instruction_t parse_io (enum opcode_t oc)
 	struct instruction_t inst;
 
 	inst.os.reg = parse_reg();
+
 	inst.oc = oc;
 	inst.oct = io;
+
+	check_end();
 
 	return inst;
 }
