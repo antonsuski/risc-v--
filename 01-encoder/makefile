@@ -11,7 +11,7 @@ target:=encoder
 ${target}: main.c
 	clang main.c -o ${target}
 
-@phony: test clean
+@phony: test clean test_all
 
 run_test: ${target}
 	@for test_file in $(common_test_files); do \
@@ -46,6 +46,8 @@ test_arith: ${target}
 	done
 
 test: run_test
+
+test_all: test_movi test_io test_arith run_test
 
 clean:
 	rm encoder
