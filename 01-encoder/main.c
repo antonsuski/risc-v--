@@ -19,14 +19,13 @@ enum opcode_t
 	movi = 0x0,
 	add  = 0x8,
 	sub  = 0x9,
-	divv = 0xA,
-	mul  = 0xB,
+	mul  = 0xA,
+	divv = 0xB,
 	out  = 0x31,
 	in   = 0x30
 };
 
-enum reg_t
-{
+enum reg_t {
 	a = 0x0,
 	b = 0x1,
 	c = 0x2,
@@ -57,6 +56,38 @@ struct instruction_t
 	union operands_t os;
 };
 
+void reach_end()
+{
+	int c;
+	while ((c = fgetc (stdin)) != EOF)
+	{
+		if (c == ' ')
+		{
+			continue;
+		}
+		else if (c == '\n')
+		{
+			break;
+		}
+		else
+		{
+			fprintf(stdout, "ERROR");
+			exit(EXIT_SUCCESS);
+		}
+	}
+}
+
+void parse_punctuation ()
+{
+	char c;
+
+	if (!scanf (" %c ", &c) || c != ',')
+	{
+		fprintf(stdout, "ERROR");
+		exit(EXIT_SUCCESS);
+	}
+}
+
 void to_lower (char* src, size_t size)
 {
 	assert(src != NULL && "ERROR");
@@ -84,6 +115,8 @@ struct instruction_t parse_movi ()
 		exit(EXIT_SUCCESS);
 	}
 
+	reach_end();
+
 	inst.oct = move;
 	inst.oc = movi;
 	inst.os.imm = imm;
@@ -94,25 +127,22 @@ struct instruction_t parse_movi ()
 enum reg_t parse_reg ()
 {
 	enum reg_t res;
-	char reg[2];
+	char reg;
 
-	if (!scanf("%s", reg))
+	if (!scanf("%c", &reg))
 	{
 		fprintf(stdout, "ERROR");
 		exit(EXIT_SUCCESS);
 	}
 
-	reg[0] = tolower (reg[0]);
+	reg = tolower (reg);
 
-	switch (reg[0])
+	switch (reg)
 	{
-		case 'a':
-		case 'b':
-		case 'c':
-		case 'd':
-		{
-			res = reg[0] - 'a';
-		} break;
+		case 'a': return a;
+		case 'b': return b;
+		case 'c': return c;
+		case 'd': return d;
 		default:
 		{
 			fprintf(stdout, "ERROR");
@@ -129,7 +159,9 @@ struct instruction_t parse_arith (enum opcode_t oc)
 	inst.oc = oc;
 	inst.oct = arith;
 	inst.os.regs.rx = parse_reg ();
+	parse_punctuation ();
 	inst.os.regs.rs = parse_reg ();
+	reach_end();
 
 	return inst;
 }
@@ -141,6 +173,8 @@ struct instruction_t parse_io (enum opcode_t oc)
 	inst.os.reg = parse_reg();
 	inst.oc = oc;
 	inst.oct = io;
+
+	reach_end();
 
 	return inst;
 }
@@ -178,7 +212,7 @@ int main (int argc, char** argv)
 {
 	char mnemonic[def_mnemonic_size];
 	int instruction;
-	while(scanf("%15s\n", mnemonic) > 0)
+	while(scanf(" %15s\n", mnemonic) > 0)
 	{
 		to_lower(mnemonic, def_mnemonic_size);
 		if(strcmp("movi", mnemonic) == 0)
