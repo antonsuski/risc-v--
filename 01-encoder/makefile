@@ -11,7 +11,10 @@ target:=encoder
 ${target}: main.c
 	clang main.c -o ${target}
 
-@phony: test clean test_all
+debug: clean main.c
+	clang main.c -g -o ${target}
+
+.phony: test clean test_all
 
 run_test: ${target}
 	@for test_file in $(common_test_files); do \
